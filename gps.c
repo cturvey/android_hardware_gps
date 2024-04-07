@@ -2,6 +2,7 @@
 ** Copyright 2006, The Android Open Source Project
 ** Copyright 2009, Michael Trimarchi <michael@panicking.kicks-ass.org>
 ** Copyright 2015, Keith Conger <keith.conger@gmail.com>
+** Copyright 2024, Clive Turvey <sourcer32@gmail.com>
 **
 ** This program is free software; you can redistribute it and/or modify it under
 ** the terms of the GNU General Public License as published by the Free
@@ -64,8 +65,8 @@ static long           time_sync;
 #  define  D(...)   ((void)0)
 #endif
 
-#define GPS_DEV_SLOW_UPDATE_RATE (10)
-#define GPS_DEV_HIGH_UPDATE_RATE (1)
+#define GPS_DEV_SLOW_UPDATE_RATE (1)
+#define GPS_DEV_HIGH_UPDATE_RATE (5)
 
 static void gps_dev_set_meas_rate(int fd, unsigned short period_ms);
 
@@ -901,7 +902,7 @@ gps_state_thread( void*  arg )
                             D("GPS thread stopping");
                             started = 0;
                             update_gps_status(GPS_STATUS_SESSION_END);
-                            gps_dev_set_meas_rate(state->fd, GPS_DEV_SLOW_UPDATE_RATE * 1000);
+                            gps_dev_set_meas_rate(state->fd, 1000 / GPS_DEV_SLOW_UPDATE_RATE); // 1 Hz
                         }
                     }
                 } else if (fd == gps_fd) {
@@ -964,17 +965,17 @@ gps_state_init( GpsState*  state, GpsCallbacks* callbacks )
 
     D("GPS will read from %s", device);
 
-    period_in_ms = GPS_DEV_HIGH_UPDATE_RATE * 1000;
+    period_in_ms = 1000 / GPS_DEV_HIGH_UPDATE_RATE; // ENGR:CT in HZ, convert too ms
     if (property_get("ro.kernel.android.gps.max_rate", prop, "") != 0)
     {
         unsigned long rate = strtoul(prop, NULL, 10);
-        if (0 < rate && rate < 66)
-            period_in_ms = (unsigned short) (rate * 1000);
+        if (0 < rate && rate < 66) // Should be Hz, Once a minute makes no sense
+            period_in_ms = (unsigned short) (1000 / rate); // ENGR:CT in HZ, convert too ms
         else if (250 <= rate && rate < 65536)
             period_in_ms = (unsigned short) rate;
     }
 
-    D("measure rate is set to %u ms", period_in_ms);
+    D("measure rate is set to %u ms", period_in_ms); // Sent in CMD_START
 
     time_sync = false;
     if (property_get("ro.kernel.android.gps.time_sync", prop, "") != 0)
@@ -1020,7 +1021,7 @@ gps_state_init( GpsState*  state, GpsCallbacks* callbacks )
         tcsetattr( state->fd, TCSANOW, &ios );
     }
 
-    gps_dev_set_meas_rate(state->fd, GPS_DEV_SLOW_UPDATE_RATE * 1000);
+    gps_dev_set_meas_rate(state->fd, 1000 / GPS_DEV_SLOW_UPDATE_RATE);
 
     if ( socketpair( AF_LOCAL, SOCK_STREAM, 0, state->control ) < 0 ) {
         ALOGE("Could not create thread control socket pair: %s", strerror(errno));

@@ -2,9 +2,17 @@ Work-In-Progess
 
 Fixing and adding functionality of address uBlox M10 concerns  https://portal.u-blox.com/s/question/0D5Oj000009Y25fKAC/differences-in-data-transmission-between-ublox7-and-m10
 
+Driver looks to expect 12-Channels, doesn't need $GP Talker ID, but also probably going to step on itself if sees PRN's from other constellations.
+
+Uses GSV, GSA, RMC and VTG, could probably disable GLL
+
 Going to change rates to Hz
 
-Adding UBX-CFG-NMEA
+Set Fast behaviour to 5 Hz, needs sufficient baud rate
+
+Adding UBX-CFG-NMEA to get a more GPS / 12-Channel behaviour the rest of the driver assumes. The receiver will continue to use all constellations. M10 supports reporting degrees to 7dp, so enabled that.
+
+Assuming it's going to use the TTY directly, not GPSd
 
 -Clive
 7-Apr-2024

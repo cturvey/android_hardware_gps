@@ -65,10 +65,11 @@ static long           time_sync;
 #  define  D(...)   ((void)0)
 #endif
 
-#define GPS_DEV_SLOW_UPDATE_RATE (1)
-#define GPS_DEV_HIGH_UPDATE_RATE (5)
+#define GPS_DEV_SLOW_UPDATE_RATE (1) // 1 Hz
+#define GPS_DEV_HIGH_UPDATE_RATE (5) // 5 Hz, needs sufficient baud rate
 
 static void gps_dev_set_meas_rate(int fd, unsigned short period_ms);
+static void gps_dev_set_nmea(int fd);
 
 /*****************************************************************/
 /*****************************************************************/
@@ -896,6 +897,7 @@ gps_state_thread( void*  arg )
                             started = 1;
                             update_gps_status(GPS_STATUS_SESSION_BEGIN);
                             gps_dev_set_meas_rate(state->fd, period_in_ms);
+                            gps_dev_set_nmea(state->fd); // Set preferred NMEA forms
                         }
                     } else if (cmd == CMD_STOP) {
                         if (started) {
@@ -1220,6 +1222,20 @@ static void gps_dev_set_meas_rate(int fd, unsigned short period_ms)
 
     gps_dev_calc_ubx_csum(buff + 2, 10, buff + 12, buff + 13);
 
+    gps_dev_send(fd, (char *)buff, sizeof(buff));
+}
+
+
+static void gps_dev_set_nmea(int fd) // Should work for M10
+{
+    // NMEA Talker ID $GP, Only GPS, NMEA 4.1, High Precision, Mask QZSS, GLONASS, BEIDOU, GALILEO
+    unsigned char buff[] = {
+      0xB5,0x62,0x06,0x17,0x14,0x00,
+      0x10,0x41,0x00,0x0A,0x74,0x00,0x00,0x00,
+      0x01,0x01,0x00,0x01,0x00,0x00,0x00,0x00,
+      0x00,0x00,0x00,0x00,
+      0x03,0x76 };
+    
     gps_dev_send(fd, (char *)buff, sizeof(buff));
 }
 

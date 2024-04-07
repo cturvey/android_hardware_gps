@@ -1,4 +1,15 @@
-Android Serial GPS Driver
+Work-In-Progess
+
+Fixing and adding functionality of address uBlox M10 concerns  https://portal.u-blox.com/s/question/0D5Oj000009Y25fKAC/differences-in-data-transmission-between-ublox7-and-m10
+
+Going to change rates to Hz
+
+Adding UBX-CFG-NMEA
+
+-Clive
+7-Apr-2024
+
+# Android Serial GPS Driver
 
 How to use:
 
@@ -11,6 +22,8 @@ ie. ro.kernel.android.gpsttybaud=9600
 Default GPS fix rate (interval between position updates) depends on the used device but it is often 1 second.  This rate is possible
 to modify by property "ro.kernel.android.gps.max_rate" if your GPS device is able to process UBX protocol. Acceptable property value
 must be from one of two ranges - from 1 to 65 seconds or from 250 to 65000 milliseconds.
+
+## This I think should be Hz or Milliseconds, updating once a minute makes little sense 
 
 Serial GPS driver is able to synchronize system time by the similar way as Internet connection. Property
 "ro.kernel.android.gps.time_sync" which is greater than zero is taken as threshold in seconds. If difference between system time
